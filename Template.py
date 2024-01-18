@@ -3,6 +3,7 @@ import tkinter
 import tkinter.messagebox
 from tkintermapview import TkinterMapView
 from pyswip import Prolog
+import pandas as pd
 
 
 class App(tkinter.Tk):
@@ -65,9 +66,20 @@ class App(tkinter.Tk):
     def check_connections(self, results):
         print('result2 ', results)
         locations = []
+        dfA = pd.read_csv('Adjacency_matrix.csv')
+        prolog.retractall("directly_connected(_,_)")
+        prolog.retractall("connected(_,_)")
         for result in results:
             city  = result["City"]
             locations.append(city)
+            for index, row in dfA.iterrows():
+                if row[city] == 1:
+                    s = 'directly_connected("'
+                    s += city + '","' + row['Destinations'] + '")'
+                    print(s)
+                    prolog.assertz(s)
+            prolog.assertz("connected(X,Y) :- directly_connected(X,Z), directly_connected(Z,Y)")
+
             # TODO 5: create the knowledgebase of the city and its connected destinations using Adjacency_matrix.csv
 
 
@@ -77,11 +89,10 @@ class App(tkinter.Tk):
         """Extract locations from the text area and mark them on the map."""
         text = self.text_area.get("1.0", "end-1c")  # Get text from text area
         locations = self.extract_locations(text)  # Extract locations (you may use a more complex method here)
-
-
+        print(locations)
         # TODO 4: create the query based on the extracted features of user desciption 
         ################################################################################################
-        query = "destination(City,_, _, _, low, _, _, _, _, _, _, _, _)"
+        query = locations
         results = list(prolog.query(query))
         print(results)
         locations = self.check_connections(results)
@@ -115,12 +126,44 @@ class App(tkinter.Tk):
             self.marker_path = self.map_widget.set_path(position_list)
 
     def extract_locations(self, text):
+        print(type(text))
         """Extract locations from text. A placeholder for more complex logic."""
         # Placeholder: Assuming each line in the text contains a single location name
         # TODO 3: extract key features from user's description of destinations
         ################################################################################################
-
-        return [line.strip() for line in text.split('\n') if line.strip()]
+        s = 'destination(City,'
+        dfD = pd.read_csv('Destinations.csv')
+        for index, row in dfD.iterrows():
+            co = re = cl = bu = ac = de = du = cu = hi = na = ac = la = '_'
+            if row['country'] in text:
+                co = row['country']
+            if row['region'] in text:
+                re = row['region']
+            if row['Climate'] in text:
+                cl = row['Climate']
+            if row['Budget'] in text:
+                bu = row['Budget']
+            if row['Activity'] in text:
+                ac = row['Activity']
+            if row['Duration'] in text:
+                du = row['Duration']
+            if row['Cuisine'] in text:
+                cu = row['Cuisine']
+            if row['History'] in text:
+                hi = row['History']
+            if row['Natural Wonder'] in text:
+                na = row['Natural Wonder']
+            if row['Accommodation'] in text:
+                ac = row['Accommodation']
+            if row['Language'] in text:
+                la = row['Language']
+            if row['Demographics'] in text:
+                de = row['Demographics']
+        s += co + ',' + re + ',' + cl + ',' + bu + ','
+        s += ac + ',' + de + ',' + du + ',' + cu + ','
+        s += hi + ',' + na + ',' + ac + ',' + la + ')'
+        print('extracted: ', s)
+        return s
 
     def start(self):
         self.mainloop()
@@ -130,13 +173,19 @@ class App(tkinter.Tk):
 # STEP1: Define the knowledge base of illnesses and their symptoms
 
 prolog = Prolog()
-
+dfD = pd.read_csv('Destinations.csv')
 prolog.retractall("destination(_, _, _, _, _, _, _, _, _, _, _, _, _)")
-prolog.assertz("destination('Tokyo', japan, 'East Asia', temperate, high, cultural, solo, long, asian, modern, mountains, luxury, japanese)")
-prolog.assertz("destination('Ottawa', canada, 'North America', cold, medium, adventure, family_friendly, medium, european, modern, forests, mid_range, english)")
-prolog.assertz("destination('Mexico City', mexico, 'North America', temperate, low, cultural, senior, short, latin_american, ancient, mountains, budget, spanish)")
-prolog.assertz("destination('Rome', italy, 'Southern Europe', temperate, high, cultural, solo, medium, european, ancient, beaches, luxury, italian)")
-prolog.assertz("destination('Brasilia', brazil, 'South America', tropical, low, adventure, family_friendly, long, latin_american, modern, beaches, budget, portuguese)")
+for index, row in dfD.iterrows():
+    s = 'destination("'
+    s += row['Destinations'] + '","' +  row['country'] + '","' + row['region'] + '","' + row['Climate'] + '","' + row['Budget'] + '","'
+    s += row['Activity'] + '","' + row['Demographics'] + '","' + row['Duration'] + '","' + row['Cuisine'] + '","'
+    s += row['History'] + '","' + row['Natural Wonder'] + '","' + row['Accommodation'] + '","' + row['Language'] + '")'
+    prolog.assertz(s)
+# prolog.assertz("destination('Tokyo', japan, 'East Asia', temperate, high, cultural, solo, long, asian, modern, mountains, luxury, japanese)")
+# prolog.assertz("destination('Ottawa', canada, 'North America', cold, medium, adventure, family_friendly, medium, european, modern, forests, mid_range, english)")
+# prolog.assertz("destination('Mexico City', mexico, 'North America', temperate, low, cultural, senior, short, latin_american, ancient, mountains, budget, spanish)")
+# prolog.assertz("destination('Rome', italy, 'Southern Europe', temperate, high, cultural, solo, medium, european, ancient, beaches, luxury, italian)")
+# prolog.assertz("destination('Brasilia', brazil, 'South America', tropical, low, adventure, family_friendly, long, latin_american, modern, beaches, budget, portuguese)")
 
 
 
