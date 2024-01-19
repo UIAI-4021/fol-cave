@@ -70,13 +70,14 @@ class App(tkinter.Tk):
         prolog.retractall("directly_connected(_,_)")
         prolog.retractall("connected(_,_)")
         for result in results:
-            city  = result["City"]
+            city = result["City"]
             locations.append(city)
+            if(city == "Xian"):
+                city = "Xi'an"
             for index, row in dfA.iterrows():
                 if row[city] == 1:
                     s = "directly_connected('"
-                    s += city + "', '" + row['Destinations'] + "')"
-                    print(s)
+                    s += city.replace("'", "") + "', '" + row['Destinations'].replace("'", "") + "')"
                     prolog.assertz(s)
             prolog.assertz("connected(X,Y) :- directly_connected(X,Z), directly_connected(Z,Y)")
 
@@ -92,12 +93,14 @@ class App(tkinter.Tk):
         # TODO 4: create the query based on the extracted features of user desciption 
         ################################################################################################
         query = locations
-        print('query = ',query)
         results = list(prolog.query(query))
         locations = self.check_connections(results)
+        if len(locations) > 5:
+            print('hoy')
+            self.start()
         # TODO 6: if the number of destinations is less than 6 mark and connect them 
         ################################################################################################
-        print(locations)
+        print("hoho end\n", locations)
         locations = ['mexico_city','rome' ,'brasilia']
         self.mark_locations(locations)
 
@@ -138,51 +141,19 @@ class App(tkinter.Tk):
                 if column in text:
                     S[i] = column
                 i += 1
-            # co = re = cl = bu = ac = de = du = cu = hi = na = ac = la = '_'
-            # if row['country'] in text:
-            #     S[0] = row['country']
-            # if row['region'] in text:
-            #     S[0] = row['region']
-            # if row['Climate'] in text:
-            #     S[0] = row['Climate']
-            # if row['Budget'] in text:
-            #     S[0] = row['Budget']
-            # if row['Activity'] in text:
-            #     S[0] = row['Activity']
-            # if row['Duration'] in text:
-            #     S[0] = row['Duration']
-            # if row['Cuisine'] in text:
-            #     S[0] = row['Cuisine']
-            # if row['History'] in text:
-            #     S[0] = row['History']
-            # if row['Natural Wonder'] in text:
-            #     S[0] = row['Natural Wonder']
-            # if row['Accommodation'] in text:
-            #     S[0] = row['Accommodation']
-            # if row['Language'] in text:
-            #     la = row['Language']
-            # if row['Demographics'] in text:
-            #     de = row['Demographics']
-        # s += co + ',' + re + ',' + cl + ',' + bu + ','
-        # s += ac + ',' + de + ',' + du + ',' + cu + ','
-        # s += hi + ',' + na + ',' + ac + ',' + la + ')'
         for i in range(1, 12):
             if S[i] != '_':
-                s += "" + S[i] + ", "
+                s += "'" + S[i] + "', "
             else:
                 s += "_, "
         if S[12] != '_':
-            s += "" + S[i] + ")"
+            s += "'" + S[12] + "')"
         else:
             s += "_)"
         return s
 
     def start(self):
         self.mainloop()
-
-# TODO 1: read destinations' descriptions from Destinations.csv and add them to the prolog knowledge base
-################################################################################################
-# STEP1: Define the knowledge base of illnesses and their symptoms
 
 prolog = Prolog()
 dfD = pd.read_csv('Destinations.csv')
@@ -193,6 +164,11 @@ for index, row in dfD.iterrows():
     s += row['Activity'] + "', '" + row['Demographics'] + "', '" + row['Duration'] + "', '" + row['Cuisine'] + "', '"
     s += row['History'] + "', '" + row['Natural Wonder'] + "', '" + row['Accommodation'] + "', '" + row['Language'] + "')"
     prolog.assertz(s)
+# TODO 1: read destinations' descriptions from Destinations.csv and add them to the prolog knowledge base
+################################################################################################
+# STEP1: Define the knowledge base of illnesses and their symptoms
+
+
 # prolog.assertz("destination('Tokyo', japan, 'East Asia', temperate, high, cultural, solo, long, asian, modern, mountains, luxury, japanese)")
 # prolog.assertz("destination('Ottawa', 'canada', 'North America', 'cold', 'medium', 'adventure', 'family_friendly', 'medium', 'european', 'modern', 'forests', 'mid_range', 'english')")
 # prolog.assertz("destination('Mexico City', mexico, 'North America', temperate, low, cultural, senior, short, latin_american, ancient, mountains, budget, spanish)")
