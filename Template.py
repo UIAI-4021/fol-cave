@@ -64,6 +64,10 @@ class App(tkinter.Tk):
         self.marker_list = []  # Keeping track of markers
 
     def check_connections(self, results):
+        def XI(X):
+            if city == "Xian":
+                return "Xi'an"
+            return X
         print('result2 ', results)
         locations = []
         dfA = pd.read_csv('Adjacency_matrix.csv')
@@ -83,6 +87,7 @@ class App(tkinter.Tk):
         resultCities = []
         for result in results:
             city = result["City"]
+            print("city", city)
             resultCities.append(city)
             # locations.append(city)
             if(city == "Xian"):
@@ -125,6 +130,7 @@ class App(tkinter.Tk):
         #         prolog.assertz(s)
         # prolog.assertz("connected(X, Y) :- directly_connected(Y, X)")
         # prolog.assertz("connected(X, Y) :- directly_connected(X, Y)")
+        # prolog.assertz("directly_connected(X, Y) :- directly_connected(Y, X)")
         prolog.assertz("connected(X, Z, Y) :- directly_connected(X, Z), directly_connected(Z, Y)")
         # prolog.assertz("connected(X, Y) :- connected(Y, X)")
         # maxScore = -1
@@ -139,29 +145,58 @@ class App(tkinter.Tk):
         #         locations = List
         
         locations = []
+        q = False
+        print(len(resultCities))
         for city in resultCities:
+
+            if q:
+                q = False
+                continue
+
             print(city)
+
             if len(locations) > 0:
                 for city2 in locations:
-                    query = "connected('" + city + "', '" + city2 + "')"
+                    query = "directly_connected('" + city + "', '" + city2 + "')"
+
                     if list(prolog.query(query)):
-                        if city == "Xian":
-                            city = "Xi'an"
-                        locations.append(city)
+                        locations.append(XI(city))
+                        break
+                    
+                    query = "connected('" + city + "', Z, '" + city2 + "')"
+                    r = list(prolog.query(query))
+
+                    if r:
+                        Z = r[0]["Z"]
+                        locations.append(XI(Z))
+                        locations.append(XI(city))
                         break
             else:
                 for city2 in resultCities:
-                    query = "connected('" + city + "', '" + city2 + "')"
-                    if list(prolog.query(query)) and city2 != city:
-                        if city == "Xian":
-                            city = "Xi'an"
-                        locations.append(city)
-                        break
+                    if city2 != city:
+                        query = "directly_connected('" + city + "', '" + city2 + "')"
+                        r = list(prolog.query(query))
+                        if r:
+                            q = True
+                            locations.append(XI(city))
+                            locations.append(XI(city2))
+                            break
+
+                        query = "connected('" + city + "', Z, '" + city2 + "')"
+                        r = list(prolog.query(query))
+
+                        if r:
+                            q = True
+                            locations.append(XI(city))
+                            Z = r[0]["Z"]
+                            locations.append(XI(Z))
+                            locations.append(XI(city2))
+                            break
+                            
         if not len(locations):
             if len(resultCities):
                 locations.append(resultCities[0])
 
-            
         # prolog.assertz("connected(X,Z,Y) :- directly_connected(X,Z), directly_connected(Z,Y)")
         # for result in results:
         #     City = result["City"]
@@ -197,6 +232,7 @@ class App(tkinter.Tk):
         locations = self.extract_locations(text)  # Extract locations (you may use a more complex method here)
         # TODO 4: create the query based on the extracted features of user desciption 
         ################################################################################################
+        print("query: ", locations)
         results = list(prolog.query(locations))
         locations = self.check_connections(results)
         if len(locations) > 5:
@@ -240,11 +276,12 @@ class App(tkinter.Tk):
         dfD = pd.read_csv('Destinations.csv')
         S = ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_']
         for index, row in dfD.iterrows():
-            i = 0
+            i = -1
             for column in row:
+                i += 1
+                if i == 10 and column == 'Desert': continue
                 if column in text:
                     S[i] = column
-                i += 1
         for i in range(1, 12):
             if S[i] != '_':
                 s += "'" + S[i] + "', "
