@@ -72,13 +72,7 @@ class App(tkinter.Tk):
         locations = []
         dfA = pd.read_csv('Adjacency_matrix.csv')
         prolog.retractall("directly_connected(_,_)")
-        prolog.retractall("connected(_,_)")
-        # for result in results:
-        #     city = result["City"]
-        #     if(city == "Xian"):
-        #         city = "Xi'an"
-        #     for index, row in dfa.itterows():
-        #         city2 = row['Destination']
+        prolog.retractall("connected(_,_,_)")
 
         cityIndex = []
         for index, row in dfA.iterrows():
@@ -89,11 +83,10 @@ class App(tkinter.Tk):
             city = result["City"]
             print("city", city)
             resultCities.append(city)
-            # locations.append(city)
             if(city == "Xian"):
                 city = "Xi'an"
             
-            for index, row in dfA.iterrows(): #Level 1
+            for index, row in dfA.iterrows():
                 if row['Destinations'] == city:
                     i = -1
                     for column in row:
@@ -110,39 +103,7 @@ class App(tkinter.Tk):
                     s = "directly_connected('"
                     s += city.replace("'", "") + "', '" + row['Destinations'].replace("'", "") + "')"
                     prolog.assertz(s)
-        # print("checkfor2")
-        # for _, row in dfA.iterrows(): #Level 2
-        #     City = row['Destinations']
-        #     city = row['Destinations'].replace("'", "")
-        #     if city in resultCities:
-        #         continue
-        #     if city in cities:
-        #         i = -1
-        #         for column in row:
-        #             if column == 1:
-        #                 s = "directly_connected('"
-        #                 s += cityIndex[i].replace("'", "") + "', '" + city.replace("'", "") + "')"
-        #                 prolog.assertz(s)
-        #             i += 1
-        #     elif row[City] == 1:
-        #         s = "directly_connected('"
-        #         s += city.replace("'", "") + "', '" + row['Destinations'].replace("'", "") + "')"
-        #         prolog.assertz(s)
-        # prolog.assertz("connected(X, Y) :- directly_connected(Y, X)")
-        # prolog.assertz("connected(X, Y) :- directly_connected(X, Y)")
-        # prolog.assertz("directly_connected(X, Y) :- directly_connected(Y, X)")
         prolog.assertz("connected(X, Z, Y) :- directly_connected(X, Z), directly_connected(Z, Y)")
-        # prolog.assertz("connected(X, Y) :- connected(Y, X)")
-        # maxScore = -1
-        # for city in resultCities:
-        #     List = []
-        #     query = "connected('" + city + ", X)"
-        #     for result in list(prolog.query(query)):
-        #         List.append(result["X"])
-        #     score = len(list(set(List) & set(resultCities)))
-        #     if score > maxScore:
-        #         maxScore = score
-        #         locations = List
         
         locations = []
         q = False
@@ -196,33 +157,8 @@ class App(tkinter.Tk):
         if not len(locations):
             if len(resultCities):
                 locations.append(resultCities[0])
-
-        # prolog.assertz("connected(X,Z,Y) :- directly_connected(X,Z), directly_connected(Z,Y)")
-        # for result in results:
-        #     City = result["City"]
-        #     query = "directly_connected('" + City + "', X)"
-        #     List = list(prolog.query(query))
-        #     for result2 in results:
-        #         City2 = result2["City"]
-        #         if City2 in List:
-        #             locations.append(City)
-        #             locations.append(City2)
-        #             City = City2
-        #             query = "directly_connected('" + City + "', X)"
-        #             List = list(prolog.query(query))
-        #         else:
-        #             query = "connected('" + City + "', X, '" + City2 + "')"
-        #             List2 = list(prolog.query(query))
-        #             if len(List2):
-        #                 locations.append(City)
-        #                 locations.append(City2)
-        #                 locations.append(List2[0]["X"])
-        #                 City = City2
-        #                 query = "directly_connected('" + City + "', X)"
-        #                 List = list(prolog.query(query))
             
             # TODO 5: create the knowledgebase of the city and its connected destinations using Adjacency_matrix.csv
-
 
         return locations
 
@@ -237,12 +173,12 @@ class App(tkinter.Tk):
         locations = self.check_connections(results)
         if len(locations) > 5:
             print(len(locations))
+            print(locations)
             print('please enter more features')
             self.start()
         # TODO 6: if the number of destinations is less than 6 mark and connect them 
         ################################################################################################
         print("end\n", locations)
-        # locations = ['mexico_city','rome' ,'brasilia']
         self.mark_locations(locations)
 
     def mark_locations(self, locations):
@@ -268,6 +204,12 @@ class App(tkinter.Tk):
             self.marker_path = self.map_widget.set_path(position_list)
 
     def extract_locations(self, text):
+        def decapitalize(word):
+            if word:
+                return word[0].lower() + word[1:]
+            else:
+                return word
+
         """Extract locations from text. A placeholder for more complex logic."""
         # Placeholder: Assuming each line in the text contains a single location name
         # TODO 3: extract key features from user's description of destinations
@@ -279,8 +221,7 @@ class App(tkinter.Tk):
             i = -1
             for column in row:
                 i += 1
-                if i == 10 and column == 'Desert': continue
-                if column in text:
+                if (column in text) or (decapitalize(column) in text):
                     S[i] = column
         for i in range(1, 12):
             if S[i] != '_':
@@ -310,18 +251,6 @@ for index, row in dfD.iterrows():
 ################################################################################################
 # STEP1: Define the knowledge base of illnesses and their symptoms
 
-
-# prolog.assertz("destination('Tokyo', japan, 'East Asia', temperate, high, cultural, solo, long, asian, modern, mountains, luxury, japanese)")
-# prolog.assertz("destination('Ottawa', 'canada', 'North America', 'cold', 'medium', 'adventure', 'family_friendly', 'medium', 'european', 'modern', 'forests', 'mid_range', 'english')")
-# prolog.assertz("destination('Mexico City', mexico, 'North America', temperate, low, cultural, senior, short, latin_american, ancient, mountains, budget, spanish)")
-# prolog.assertz('destination("Rome", italy, "Southern Europe", temperate, high, cultural, solo, medium, european, ancient, beaches, luxury, italian)')
-# prolog.assertz('destination("Brasilia", "brazil", "South America", "tropical", "low", "adventure", "family_friendly", "long", "latin_american", "modern", "beaches", "budget", "portuguese")')
-
-# query = "destination(City, 'canada', 'North America', 'cold', 'medium', 'adventure', 'family_friendly', 'medium', 'european', 'modern', 'forests', 'mid_range', 'english')"
-# results = list(prolog.query(query))
-# for result in results:
-#     print(result['City'])
-# Wellington New Zealand Oceania Temperate High Adventure Family-friendly Long Western Modern Mountains Luxury English
 # TODO 2: extract unique features from the Destinations.csv and save them in a dictionary
 ################################################################################################
 
